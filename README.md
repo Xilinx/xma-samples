@@ -1,3 +1,3 @@
 # XMA samples
 
-Example of host code development using Xilinx Media Accelerator (XMA) 
+Examples of host code development using Xilinx Media Accelerator (XMA) 
