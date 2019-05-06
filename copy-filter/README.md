@@ -99,7 +99,7 @@ The plugin code is the lower level interface that interacts with FPGA. To compil
 
 A dynamic library (.so) file will be generated after a successful plugin compilation process. 
 
-Note: Once a kernel+plugin pair is compiled that can be used with different higher level applications. This package provides a standalone application as an example. This package also provides instructions to access a FFMpeg application for this copy kernel+plugin pair. 
+**Note:** Once a kernel+plugin pair is compiled that can be used with different higher level applications. This package provides a standalone application as an example. This package also provides instructions to download a FFMpeg filter integrating this kernel+plugin pair. 
 
 ### Standalone application Compilation
 The application code is the higher level host application. The application code interacts with the FPGA through the plugin API.
