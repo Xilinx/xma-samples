@@ -10,7 +10,7 @@ Two applications are provided with this encoder plugin example.
 
 ## Changes from the previous versions: 
 
-In earlier versions of XMA plugin **xma_plg_register_write** and **xlc_plg_register_read** were used for various purposes. However starting from 2018.3, **xma_plg_register_write** and **xlc_plg_register_read** are depricated and new APIs are provided at a higher level of abstraction. The new APIs are purposed-based. So instead of direct register read/write the user will use appropriate higher-level purposed based API to achieve the same result. 
+In earlier versions of XMA plugin **xma_plg_register_write** and **xlc_plg_register_read** were used for various purposes. However starting from 2018.3, **xma_plg_register_write** and **xlc_plg_register_read** are deprecated and new APIs are provided at a higher level of abstraction. The new APIs are purposed-based. So instead of direct register read/write the user will use appropriate higher-level purposed based API to achieve the same result. 
   
 Towards that end, XMA now offers a new execution model with three brand new APIs. 
 
