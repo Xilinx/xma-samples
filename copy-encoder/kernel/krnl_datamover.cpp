@@ -1,33 +1,10 @@
-/**********
-Copyright (c) 2018, Xilinx, Inc.
-All rights reserved.
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors
-may be used to endorse or promote products derived from this software
-without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-**********/
 #ifndef __SYNTHESIS__
 #include <stdio.h>
 #endif
 #include <stdio.h>
 #include <assert.h>
 #include "ap_int.h"
-#include "hls_video.h"
+#include "hls_stream.h"
 
 void krnl_datamover_core(
 				ap_uint<512>* srcYImg,
@@ -140,30 +117,38 @@ void krnl_datamover_core(
 	*dstDummy_Cnt = delay_10cnt;
 }
 
-void copy(ap_uint<512>*srcImg, ap_uint<512>*dstImg,int burst_num)
-{
-    hls::stream<ap_uint<512> >    data_fifo;
-	
-#pragma HLS stream depth=128 variable=data_fifo
-	
-	ap_uint<512> data_in;
-    ap_uint<512> data_out;
+void funcRead(ap_uint<512>* srcImg, hls::stream<ap_uint<512> > &data_fifo, int burst_num) {
 	int i = 0;
-    int j = 0;
-	
-#pragma HLS DATAFLOW
+	ap_uint<512> data_in;
     //Read data into FIFO
     for ( i = 0; i < burst_num; i++) {
 #pragma HLS pipeline II=1
 		data_in = srcImg[i];
 		data_fifo << data_in;
 	}	
-	
-    //Write data from FIFO
-    for ( j=0; j < burst_num; j++) {
+}
+
+void funcWrite(hls::stream<ap_uint<512> > &data_fifo, ap_uint<512>* dstImg, int burst_num) {
+	int j = 0;
+	ap_uint<512> data_out;
+	//Write data from FIFO
+	for ( j=0; j < burst_num; j++) {
 #pragma HLS pipeline II=1
 		data_fifo >> data_out;
 		dstImg[j] =  data_out;		
-	}	
+	}
+}
+
+void copy(ap_uint<512>*srcImg, ap_uint<512>*dstImg,int burst_num)
+{
+    hls::stream<ap_uint<512> >  data_fifo;
+#pragma HLS stream depth=128 variable=data_fifo
+#pragma HLS DATAFLOW
+    //Read data into FIFO
+    funcRead(srcImg, data_fifo, burst_num);
+
+    //Write data from FIFO
+    funcWrite(data_fifo, dstImg, burst_num);
+
 }	
 

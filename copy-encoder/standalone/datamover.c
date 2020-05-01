@@ -29,18 +29,18 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <xma.h>
 #include <time.h>
 
-struct thread_data
+typedef struct thread_data
 {
     XmaEncoderSession *enc_session;
     XmaEncoderProperties enc_props;
     const char *input_filename;
     const char *output_filename;
     int32_t num_frames;
-};
+} thread_data;
 
 void *thread(void *ptr)
 {
-    struct thread_data *data = ptr;
+    struct thread_data *data = (thread_data*)ptr;
     XmaEncoderSession *enc_session;
     int32_t num_frames;
     int64_t rc;
@@ -73,14 +73,15 @@ void *thread(void *ptr)
     fprops.width = 1920;
     fprops.height = 1080;
     fprops.bits_per_pixel = 8;
-    XmaFrame *input_frame = xma_frame_alloc(&fprops);
+    XmaFrame *input_frame = xma_frame_alloc(&fprops, false);
 
     // Create data buffer for copy encoder
-    XmaDataBuffer *buffer = xma_data_buffer_alloc((fprops.width)*(fprops.height)*1.5);
+    XmaDataBuffer *buffer = xma_data_buffer_alloc((fprops.width)*(fprops.height)*1.5, false);
     rc = 0;
 
     // Run copy encoder for num_frames
-    for (int i = 0; i < num_frames; i++)
+    int i=0;
+    for (i = 0; i < num_frames; i++)
     {
         // Read raw video input
         int32_t data_size = 0;
@@ -115,11 +116,10 @@ void *thread(void *ptr)
 
         //NULL frame sent to read last frame output from device
         if(i==num_frames-1) {
-            input_frame->data[0].buffer = NULL;
-            input_frame->data[1].buffer = NULL;
-            input_frame->data[2].buffer = NULL;
-            rc = xma_enc_session_send_frame(enc_session, input_frame);
+            XmaFrame *input_null = xma_frame_alloc(&fprops, true);
+            rc = xma_enc_session_send_frame(enc_session, input_null);
             rc = xma_enc_session_recv_data(enc_session, buffer, &data_size);
+            xma_frame_free(input_null);
             if (data_size) {
                 fwrite(buffer->data.buffer, sizeof(uint8_t), data_size, fpout);
             }
@@ -131,6 +131,8 @@ void *thread(void *ptr)
     // Clean up
     fclose(fpin);
     fclose(fpout);
+    xma_frame_free(input_frame);
+    xma_data_buffer_free(buffer);
 
     return NULL;
 }
@@ -141,27 +143,40 @@ int main(int argc, char *argv[])
     pthread_t thread_inst[8];
     struct thread_data thread_data[8];
 
-    if (argc < 6 || argc > 7)
+    if (argc < 5 || argc > 6)
     {
         printf("Usage:\n");
-        printf("   datamover_app: <Configuration file name> <input 1> <input 2> <input 3> <number of frames> [thread_count]\n");
-        printf("   thread count = 1 to 8 (max)  [default: 1] \n");
-        printf("   ./datamover_app datamover_cfg.yaml input1.yuv input2.yuv input3.yuv input4.yuv input5.yuv input6.yuv 500 6\n");
+        printf("   datamover_app: <input 1> <input 2> <input 3> <number of frames> [thread_count]\n");
+        printf("   thread count = 1 to 3 (max)  [default: 1] \n");
+        printf("   ./datamover_app input1.yuv input2.yuv input3.yuv 500 6\n");
         return -1;
     }
 
-    rc = xma_initialize(argv[1]);
+    XmaXclbinParameter tmp_xclbin_param;
+    tmp_xclbin_param.device_id = 0;
+    tmp_xclbin_param.xclbin_name = "../kernel/xclbin/fpga.3k.hw.xilinx_u200_qdma_201920_1.xclbin";
+
+    rc = xma_initialize(&tmp_xclbin_param, 1);
     if (rc != 0) {
         return -1;
     }
 
 
-    char *in_file[] = {argv[2], argv[3], argv[4]};
+    char *in_file[] = {argv[1], argv[2], argv[3]};
     char *out_file[] = {"output_1920x1080p60_1.yuv", "output_1920x1080p60_2.yuv", "output_1920x1080p60_3.yuv"};
-    num_frames = atoi(argv[5]);
+
+    num_frames = atoi(argv[4]);
     thread_cnt = 1;
-    if (argv[6])
-        thread_cnt = atoi(argv[6]);
+    if (argv[5])
+        thread_cnt = atoi(argv[5]);
+    if (thread_cnt > 3) {
+        printf("WARNING:  Using max thread count of 3\n");
+        printf("WARNING:  xclbin only has 3 CUs\n");
+        thread_cnt = 3;
+    }
+    if (thread_cnt < 1) {
+        thread_cnt = 1;
+    }
 
     // Setup copy encoder properties
     XmaEncoderProperties enc_props;
@@ -179,11 +194,19 @@ int main(int argc, char *argv[])
     enc_props.gop_size = 0;
     enc_props.idr_interval = 0;
 
+    enc_props.plugin_lib = "../plugin/libxlnxdatamover.so";
+    enc_props.dev_index = 0;
+    enc_props.ddr_bank_index = -1;//XMA to select the ddr bank based on xclbin meta data
+
     // Create copy encoder sessions based on requested properties
     for (i = 0; i < thread_cnt; i++) {
         thread_data[i].input_filename = in_file[i];
         thread_data[i].num_frames = num_frames;
         thread_data[i].output_filename = out_file[i];
+
+        enc_props.cu_index = i;//xclbin has only 3 CUs
+        enc_props.channel_id = i;
+
         thread_data[i].enc_session = xma_enc_session_create(&enc_props);
         if (!thread_data[i].enc_session)
             printf("Failed to create copy encoder session #%d\n", i);

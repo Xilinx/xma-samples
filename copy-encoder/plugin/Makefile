@@ -1,5 +1,5 @@
 CC = gcc 
-CFLAGS = $(shell pkg-config --cflags libxmaplugin) 
+CFLAGS = $(shell pkg-config --cflags libxma2plugin) 
 CFLAGS += -fPIC -Wall -Wextra -O1 -g
 LDFLAGS = -shared 
 RM = rm -f

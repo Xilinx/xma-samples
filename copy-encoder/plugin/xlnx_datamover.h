@@ -27,32 +27,26 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pthread.h>
 #include <xma.h>
 #include <xmaplugin.h>
+#include "krnl_datamover_hw.h"
 
 #define XLNX_DATAMOVER_MAX_CHAN_CAP 1920 * 1080 *60 *8UL
-#define XMA_AXI_IDLE             0x4
-#define XMA_AXI_START            0x1
 #define NUM_BUFFERS              2
 #define XMA_ERROR_EOF            0
 
 #ifdef __cplusplus
 extern "C"{
 #endif
-typedef struct XmaBufferStruct
-{
-    XmaBufferHandle b_handle;
-    uint64_t        paddr;
-    uint64_t        b_size;
-} XmaBufferStruct;
+
 
 typedef struct XmaEncoderBuffers
 {
-    XmaBufferStruct     input_y_buffer[NUM_BUFFERS];
-    XmaBufferStruct     input_u_buffer[NUM_BUFFERS];
-    XmaBufferStruct     input_v_buffer[NUM_BUFFERS];
-    XmaBufferStruct     output_buffer[NUM_BUFFERS];
-    XmaBufferStruct     ref_buffer[NUM_BUFFERS];
-    XmaBufferStruct     output_len[NUM_BUFFERS];
-    XmaBufferStruct     dummy_count[NUM_BUFFERS];
+    XmaBufferObj     input_y_buffer[NUM_BUFFERS];
+    XmaBufferObj     input_u_buffer[NUM_BUFFERS];
+    XmaBufferObj     input_v_buffer[NUM_BUFFERS];
+    XmaBufferObj     output_buffer[NUM_BUFFERS];
+    XmaBufferObj     ref_buffer[NUM_BUFFERS];
+    XmaBufferObj     output_len[NUM_BUFFERS];
+    XmaBufferObj     dummy_count[NUM_BUFFERS];
 } XmaEncoderBuffers;
 
 typedef struct DatamoverContext {
@@ -66,13 +60,10 @@ typedef struct DatamoverContext {
     uint32_t            in_frame;
     uint32_t            out_frame;
     uint32_t            n_frame;
+    uint8_t             regmap[REGMAP_SIZE];
     XmaEncoderBuffers   encoder;	
 } DatamoverContext;
 
-typedef struct HostKernelCtx
-{
-    pthread_mutex_t xma_mutex;
-}HostKernelCtx;
 #ifdef __cplusplus
 }
 #endif // __cplusplus
