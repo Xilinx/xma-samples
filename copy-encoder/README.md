@@ -8,9 +8,9 @@ This package contains an standalone encoder plugin example with XMA library (XMA
 
 The latest 2020.1 XRT (Xilinx Runtime) is required to execute this example. 
 
-## DSA: 
+## Platform: 
 
-This example is developed on xilinx_u200_xdma_201830_1 DSA
+This example is developed on xilinx_u200_xdma_201830_1 Platform
 
 ## Preparing the Test input YUV files
 
