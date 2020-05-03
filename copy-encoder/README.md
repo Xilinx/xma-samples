@@ -1,9 +1,7 @@
 # XMA COPY ENCODER         
 
 
-This package contains an encoder plugin example with XMA library (XMA2) for 2020.1 XRT. 
-
-This is a standalone application. If needed the plugin can be integrated into higher level video framework such as FFMpeg.
+This package contains an standalone encoder plugin example with XMA library (XMA2) for 2020.1 XRT. 
 
 
 ## XRT installation: 
@@ -26,7 +24,7 @@ The example has three parts:
 
 1. Kernel
 2. Plugin 
-3. Standalone application or FFMpeg application
+3. Standalone application 
 
 
 ### Kernel Compilation 
@@ -61,9 +59,9 @@ The plugin code is the lower level interface that interacts with FPGA. To compil
 
 A dynamic library (.so) file will be generated after a successful plugin compilation process. 
 
-** Note**: Once a kernel+plugin pair is compiled that can be used with different higher level applications. This package provides a standalone application as an example. This package also provides instructions to download a FFMpeg encoder example integrating this copy kernel+plugin pair. 
+** Note**: Once a kernel+plugin pair is compiled that can be used with different higher level applications. This package provides a standalone application as an example. However, the kernel+plugin example can be integrated to higher level framework such as FFMpeg. 
 
-### Standalone application Compilation
+### Application Compilation
 The application code is the higher level host application. The application code interacts with the FPGA through the plugin API.
 
 
@@ -73,10 +71,6 @@ The application code is the higher level host application. The application code 
 ```
 
 You will get application executable **datamover_app**
-
-### Runtime configuration file
-
-During the runtime, the application code uses a configuration file that provides the system configuration description. You can find the configuration file used in this example is **./datamover_cfg.yaml**
 
 ### Running the executable 
 
